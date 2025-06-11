@@ -3,7 +3,7 @@ description: Suggest an idea for this plugin
 title: "[FEATURE]"
 labels:
   - enhancement
-assignees: []
+assignees: ['maeltoukap']
 
 body:
   - type: markdown
@@ -17,7 +17,8 @@ body:
     attributes:
       label: Problem description
       placeholder: Describe the problem clearly
-      required: false
+    validations:
+      required: true
 
   - type: markdown
     attributes:
@@ -30,7 +31,8 @@ body:
     attributes:
       label: Solution description
       placeholder: Describe the desired solution
-      required: false
+    validations:
+      required: true
 
   - type: markdown
     attributes:
@@ -43,7 +45,8 @@ body:
     attributes:
       label: Alternatives considered
       placeholder: Describe alternative solutions
-      required: false
+    validations:
+      required: true
 
   - type: markdown
     attributes:
@@ -56,4 +59,5 @@ body:
     attributes:
       label: Additional context
       placeholder: Additional context or screenshots
-      required: false
+    validations:
+      required: true

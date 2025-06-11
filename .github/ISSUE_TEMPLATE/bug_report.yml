@@ -3,7 +3,7 @@ description: Report a bug to help us improve the plugin
 title: "[BUG]"
 labels:
   - bug
-assignees: []
+assignees: ['maeltoukap']
 
 body:
   - type: markdown
@@ -17,6 +17,7 @@ body:
     attributes:
       label: Bug description
       placeholder: Describe the bug clearly
+    validations:
       required: true
 
   - type: markdown
@@ -33,6 +34,7 @@ body:
     attributes:
       label: Steps to reproduce
       placeholder: List reproduction steps
+    validations:
       required: true
 
   - type: markdown
@@ -46,6 +48,7 @@ body:
     attributes:
       label: Expected behavior
       placeholder: Describe what you expected
+    validations:
       required: true
 
   - type: markdown
@@ -59,7 +62,8 @@ body:
     attributes:
       label: Screenshots (URLs)
       placeholder: Add screenshot URLs or descriptions
-      required: false
+    validations:
+      required: true
 
   - type: markdown
     attributes:
@@ -71,28 +75,32 @@ body:
     attributes:
       label: Device
       placeholder: e.g. Pixel 5
-      required: false
+    validations:
+      required: true
 
   - id: os
     type: input
     attributes:
       label: OS
       placeholder: e.g. Android 12
-      required: false
+    validations:
+      required: true
 
   - id: plugin_version
     type: input
     attributes:
       label: Plugin Version
       placeholder: e.g. 1.0.0
-      required: false
+    validations:
+      required: true
 
   - id: flutter_version
     type: input
     attributes:
       label: Flutter Version
       placeholder: e.g. 3.7.0
-      required: false
+    validations:
+      required: true
 
   - type: markdown
     attributes:
@@ -105,4 +113,5 @@ body:
     attributes:
       label: Additional context
       placeholder: Additional information
-      required: false
+    validations:
+      required: true
