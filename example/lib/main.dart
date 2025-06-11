@@ -9,7 +9,7 @@ void main() async {
 
 class MyApp extends StatelessWidget {
   final String? deviceId;
-  MyApp(this.deviceId);
+  const MyApp(this.deviceId, {super.key});
 
   @override
   Widget build(BuildContext context) {

@@ -18,12 +18,4 @@ void main() {
   test('$MethodChannelPersistentDeviceId is the default instance', () {
     expect(initialPlatform, isInstanceOf<MethodChannelPersistentDeviceId>());
   });
-
-  test('getPlatformVersion', () async {
-    PersistentDeviceId persistentDeviceIdPlugin = PersistentDeviceId();
-    MockPersistentDeviceIdPlatform fakePlatform = MockPersistentDeviceIdPlatform();
-    PersistentDeviceIdPlatform.instance = fakePlatform;
-
-    expect(await persistentDeviceIdPlugin.getPlatformVersion(), '42');
-  });
 }

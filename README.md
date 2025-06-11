@@ -1,7 +1,3 @@
-Here is the translated `README.md` in English, ready for publication on [pub.dev](https://pub.dev):
-
----
-
 # 📱 persistent\_device\_id
 
 A Flutter plugin that provides a **unique, persistent, and secure** device identifier on Android—even after uninstalling and reinstalling the app.
@@ -56,7 +52,7 @@ print("Device ID: $deviceId");
 
 | Platform | Support                  |
 | -------- | ------------------------ |
-| Android  | ✅ Yes                    |
+| Android  | ✅ Yes                   |
 | iOS      | 🚧 Not yet (coming soon) |
 
 ---
@@ -106,8 +102,4 @@ MIT License. © 2025 Mael Toukap.
 
 ## 🙋‍♂️ Contributing
 
-Contributions are welcome! Please open an issue or submit a pull request on [GitHub](https://github.com/<your-username>/persistent_device_id).
-
----
-
-Let me know if you'd like the full package setup (e.g., `CHANGELOG.md`, `pubspec.yaml`, `LICENSE`, and GitHub CI/CD suggestions) to complete your plugin release.
+Contributions are welcome! Please open an issue or submit a pull request on [GitHub](https://github.com/maeltoukap/persistent_device_id).
