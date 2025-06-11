@@ -1,0 +1,59 @@
+name: Feature Request
+description: Suggest an idea for this plugin
+title: "[FEATURE]"
+labels:
+  - enhancement
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Is your feature request related to a problem? Please describe.**
+        A clear and concise description of what the problem is.
+
+  - id: problem_description
+    type: textarea
+    attributes:
+      label: Problem description
+      placeholder: Describe the problem clearly
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        **Describe the solution you'd like**
+        A clear and concise description of what you want to happen.
+
+  - id: solution_description
+    type: textarea
+    attributes:
+      label: Solution description
+      placeholder: Describe the desired solution
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        **Describe alternatives you've considered**
+        A clear and concise description of any alternative solutions or features you've considered.
+
+  - id: alternatives
+    type: textarea
+    attributes:
+      label: Alternatives considered
+      placeholder: Describe alternative solutions
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        **Additional context**
+        Add any other context or screenshots about the feature request here.
+
+  - id: additional_context
+    type: textarea
+    attributes:
+      label: Additional context
+      placeholder: Additional context or screenshots
+      required: false

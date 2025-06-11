@@ -1,0 +1,108 @@
+name: Bug Report
+description: Report a bug to help us improve the plugin
+title: "[BUG]"
+labels:
+  - bug
+assignees: []
+
+body:
+  - type: markdown
+    attributes:
+      value: |
+        **Describe the bug**
+        A clear and concise description of what the bug is.
+
+  - id: bug_description
+    type: textarea
+    attributes:
+      label: Bug description
+      placeholder: Describe the bug clearly
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        **To Reproduce**
+        Steps to reproduce the behavior:
+        1. Go to '...'
+        2. Click on '....'
+        3. See error
+
+  - id: steps_to_reproduce
+    type: textarea
+    attributes:
+      label: Steps to reproduce
+      placeholder: List reproduction steps
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        **Expected behavior**
+        A clear description of what you expected to happen.
+
+  - id: expected_behavior
+    type: textarea
+    attributes:
+      label: Expected behavior
+      placeholder: Describe what you expected
+      required: true
+
+  - type: markdown
+    attributes:
+      value: |
+        **Screenshots**
+        If applicable, add screenshots to help explain your problem.
+
+  - id: screenshots
+    type: textarea
+    attributes:
+      label: Screenshots (URLs)
+      placeholder: Add screenshot URLs or descriptions
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        **Environment (please complete the following information):**
+
+  - id: device
+    type: input
+    attributes:
+      label: Device
+      placeholder: e.g. Pixel 5
+      required: false
+
+  - id: os
+    type: input
+    attributes:
+      label: OS
+      placeholder: e.g. Android 12
+      required: false
+
+  - id: plugin_version
+    type: input
+    attributes:
+      label: Plugin Version
+      placeholder: e.g. 1.0.0
+      required: false
+
+  - id: flutter_version
+    type: input
+    attributes:
+      label: Flutter Version
+      placeholder: e.g. 3.7.0
+      required: false
+
+  - type: markdown
+    attributes:
+      value: |
+        **Additional context**
+        Add any other context about the problem here.
+
+  - id: additional_context
+    type: textarea
+    attributes:
+      label: Additional context
+      placeholder: Additional information
+      required: false
