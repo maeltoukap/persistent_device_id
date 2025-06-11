@@ -1,3 +1,5 @@
+<img src="https://raw.githubusercontent.com/maeltoukap/persistent_device_id/refs/heads/main/assets/persistent_device_id_logo.png" alt="Persistent Device ID Logo" width="200"/>
+
 # 📱 persistent\_device\_id
 
 A Flutter plugin that provides a **unique, persistent, and secure** device identifier on Android—even after uninstalling and reinstalling the app.
