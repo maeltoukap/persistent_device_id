@@ -1,10 +1,9 @@
 name: persistent_device_id
 description: A Flutter plugin that provides a persistent device ID using Android Keystore and iOS Keychain.
-version: 1.0.0
+version: 1.1.0
 homepage: https://github.com/maeltoukap/persistent_device_id
 repository: https://github.com/maeltoukap/persistent_device_id
 issue_tracker: https://github.com/maeltoukap/persistent_device_id/issues
-publish_to: https://pub.dev
 
 environment:
   sdk: ^3.5.3

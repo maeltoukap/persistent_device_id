@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.1.0] - 2025-06-11
+
+### ✨ Added
+- ✅ iOS support using `keychain` for persistent device identification
+- Automatic fallback to UUID stored in the Keychain on iOS
+- Improved platform abstraction layer
+- Updated README and documentation
+
+---
+
 ## [1.0.0] - 2025-06-10
 
 ### ✨ Added
@@ -22,4 +32,3 @@ All notable changes to this project will be documented in this file.
 - Persistent across uninstalls (thanks to MediaDrm)
 
 ---
-
