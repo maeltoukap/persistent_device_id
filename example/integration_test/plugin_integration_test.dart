@@ -1,25 +1,19 @@
-// // This is a basic Flutter integration test.
-// //
-// // Since integration tests run in a full Flutter application, they can interact
-// // with the host side of a plugin implementation, unlike Dart unit tests.
-// //
-// // For more information about Flutter integration tests, please see
-// // https://flutter.dev/to/integration-testing
+import 'package:flutter_test/flutter_test.dart';
+import 'package:integration_test/integration_test.dart';
+import 'package:persistent_device_id/persistent_device_id.dart';
 
+void main() {
+  IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-// import 'package:flutter_test/flutter_test.dart';
-// import 'package:integration_test/integration_test.dart';
+  testWidgets('getDeviceId returns a stable value across repeated calls',
+      (_) async {
+    final first = await PersistentDeviceId.getDeviceId();
+    final second = await PersistentDeviceId.getDeviceId();
 
-// import 'package:persistent_device_id/persistent_device_id.dart';
+    expect(first, isNotNull);
+    if (first == null) return;
 
-// void main() {
-//   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
-
-//   testWidgets('getPlatformVersion test', (WidgetTester tester) async {
-//     final PersistentDeviceId plugin = PersistentDeviceId();
-//     final String? version = await plugin.getPlatformVersion();
-//     // The version string depends on the host platform running the test, so
-//     // just assert that some non-empty string is returned.
-//     expect(version?.isNotEmpty, true);
-//   });
-// }
+    expect(first, isNotEmpty);
+    expect(second, first);
+  });
+}

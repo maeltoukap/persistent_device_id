@@ -1,27 +1,30 @@
 import Flutter
-import UIKit
 import XCTest
-
 
 @testable import persistent_device_id
 
-// This demonstrates a simple unit test of the Swift portion of this plugin's implementation.
-//
-// See https://developer.apple.com/documentation/xctest for more information about using XCTest.
-
 class RunnerTests: XCTestCase {
-
-  func testGetPlatformVersion() {
+  func testGetDeviceIdReturnsStableValue() {
     let plugin = PersistentDeviceIdPlugin()
+    let call = FlutterMethodCall(methodName: "getDeviceId", arguments: [])
 
-    let call = FlutterMethodCall(methodName: "getPlatformVersion", arguments: [])
-
-    let resultExpectation = expectation(description: "result block must be called.")
+    var firstResult: String?
+    let firstExpectation = expectation(description: "first result block must be called")
     plugin.handle(call) { result in
-      XCTAssertEqual(result as! String, "iOS " + UIDevice.current.systemVersion)
-      resultExpectation.fulfill()
+      firstResult = result as? String
+      firstExpectation.fulfill()
     }
-    waitForExpectations(timeout: 1)
-  }
+    wait(for: [firstExpectation], timeout: 1)
 
+    var secondResult: String?
+    let secondExpectation = expectation(description: "second result block must be called")
+    plugin.handle(call) { result in
+      secondResult = result as? String
+      secondExpectation.fulfill()
+    }
+    wait(for: [secondExpectation], timeout: 1)
+
+    XCTAssertFalse(firstResult?.isEmpty ?? true)
+    XCTAssertEqual(firstResult, secondResult)
+  }
 }

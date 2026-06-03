@@ -9,19 +9,32 @@ void main() {
   const MethodChannel channel = MethodChannel('persistent_device_id');
 
   setUp(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(
-      channel,
-      (MethodCall methodCall) async {
-        return '42';
-      },
-    );
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, (MethodCall methodCall) async {
+          expect(methodCall.method, 'getDeviceId');
+          return 'method-channel-device-id';
+        });
   });
 
   tearDown(() {
-    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger.setMockMethodCallHandler(channel, null);
+    TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+        .setMockMethodCallHandler(channel, null);
   });
 
-  test('getPlatformVersion', () async {
-    expect(await platform.getPlatformVersion(), '42');
+  test('getDeviceId forwards to the native method channel', () async {
+    expect(await platform.getDeviceId(), 'method-channel-device-id');
   });
+
+  test(
+    'getDeviceId allows null when the platform cannot return an ID',
+    () async {
+      TestDefaultBinaryMessengerBinding.instance.defaultBinaryMessenger
+          .setMockMethodCallHandler(
+            channel,
+            (MethodCall methodCall) async => null,
+          );
+
+      expect(await platform.getDeviceId(), isNull);
+    },
+  );
 }

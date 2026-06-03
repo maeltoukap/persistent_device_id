@@ -1,9 +1,12 @@
-import 'package:flutter/services.dart';
+import 'persistent_device_id_platform_interface.dart';
 
+/// Provides access to the persistent app-scoped device identifier.
 class PersistentDeviceId {
-  static const _channel = MethodChannel('persistent_device_id');
-
+  /// Returns the persistent identifier reported by the current platform.
+  ///
+  /// The identifier is platform-specific and can be `null` only if the platform
+  /// implementation cannot produce a value.
   static Future<String?> getDeviceId() async {
-    return await _channel.invokeMethod<String>('getDeviceId');
+    return PersistentDeviceIdPlatform.instance.getDeviceId();
   }
 }

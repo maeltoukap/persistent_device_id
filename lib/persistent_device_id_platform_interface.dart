@@ -8,7 +8,8 @@ abstract class PersistentDeviceIdPlatform extends PlatformInterface {
 
   static final Object _token = Object();
 
-  static PersistentDeviceIdPlatform _instance = MethodChannelPersistentDeviceId();
+  static PersistentDeviceIdPlatform _instance =
+      MethodChannelPersistentDeviceId();
 
   /// The default instance of [PersistentDeviceIdPlatform] to use.
   ///
@@ -23,7 +24,8 @@ abstract class PersistentDeviceIdPlatform extends PlatformInterface {
     _instance = instance;
   }
 
-  Future<String?> getPlatformVersion() {
-    throw UnimplementedError('platformVersion() has not been implemented.');
+  /// Returns a persistent app-scoped device identifier.
+  Future<String?> getDeviceId() {
+    throw UnimplementedError('getDeviceId() has not been implemented.');
   }
 }
