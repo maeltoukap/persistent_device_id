@@ -2,12 +2,103 @@ import Flutter
 import Security
 import UIKit
 
+enum KeychainReadResult {
+    case value(String)
+    case missing
+    case unavailable(OSStatus)
+}
+
+protocol DeviceIdKeychainStore {
+    func read(account: String, service: String?) -> KeychainReadResult
+    func save(account: String, service: String, value: String) -> Bool
+}
+
+final class SystemDeviceIdKeychainStore: DeviceIdKeychainStore {
+    func read(account: String, service: String?) -> KeychainReadResult {
+        var query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: account,
+            kSecReturnData as String: true,
+            kSecMatchLimit as String: kSecMatchLimitOne
+        ]
+        if let service {
+            query[kSecAttrService as String] = service
+        }
+
+        var resultData: AnyObject?
+        let status = SecItemCopyMatching(query as CFDictionary, &resultData)
+
+        if status == errSecItemNotFound {
+            return .missing
+        }
+        guard status == errSecSuccess else {
+            return .unavailable(status)
+        }
+        guard let data = resultData as? Data,
+              let value = String(data: data, encoding: .utf8),
+              !value.isEmpty else {
+            return .missing
+        }
+
+        return .value(value)
+    }
+
+    func save(account: String, service: String, value: String) -> Bool {
+        guard !value.isEmpty, let data = value.data(using: .utf8) else {
+            return false
+        }
+
+        let query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: account,
+            kSecAttrService as String: service
+        ]
+        let attributes: [String: Any] = [
+            kSecValueData as String: data,
+            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
+        ]
+
+        let updateStatus = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
+        if updateStatus == errSecSuccess {
+            return true
+        }
+        guard updateStatus == errSecItemNotFound else {
+            return false
+        }
+
+        var addQuery = query
+        addQuery.merge(attributes) { _, new in new }
+        return SecItemAdd(addQuery as CFDictionary, nil) == errSecSuccess
+    }
+}
+
 public class PersistentDeviceIdPlugin: NSObject, FlutterPlugin {
     private static let account = "persistent_device_id.maeltoukap.me"
     private static let service = "persistent_device_id"
 
+    private let keychainStore: DeviceIdKeychainStore
+    private let idGenerator: () -> String
+
+    public override init() {
+        keychainStore = SystemDeviceIdKeychainStore()
+        idGenerator = { UUID().uuidString }
+        super.init()
+    }
+
+    init(
+        keychainStore: DeviceIdKeychainStore,
+        idGenerator: @escaping () -> String = { UUID().uuidString }
+    ) {
+        self.keychainStore = keychainStore
+        self.idGenerator = idGenerator
+        super.init()
+    }
+
     public static func register(with registrar: FlutterPluginRegistrar) {
-        let channel = FlutterMethodChannel(name: "persistent_device_id", binaryMessenger: registrar.messenger())
+        let channel = FlutterMethodChannel(
+            name: "persistent_device_id",
+            binaryMessenger: registrar.messenger()
+        )
         let instance = PersistentDeviceIdPlugin()
         registrar.addMethodCallDelegate(instance, channel: channel)
     }
@@ -20,81 +111,39 @@ public class PersistentDeviceIdPlugin: NSObject, FlutterPlugin {
         }
     }
 
-    func getOrCreateDeviceId() -> String {
-        if let existing = loadFromKeychain(account: Self.account, service: Self.service) {
+    func getOrCreateDeviceId() -> String? {
+        switch keychainStore.read(account: Self.account, service: Self.service) {
+        case let .value(existing):
             return existing
+        case .unavailable:
+            return nil
+        case .missing:
+            break
         }
 
-        if let legacy = loadLegacyKeychainValue(account: Self.account) {
-            saveToKeychain(account: Self.account, service: Self.service, value: legacy)
+        switch keychainStore.read(account: Self.account, service: nil) {
+        case let .value(legacy):
+            _ = keychainStore.save(
+                account: Self.account,
+                service: Self.service,
+                value: legacy
+            )
             return legacy
+        case .unavailable:
+            return nil
+        case .missing:
+            break
         }
 
-        let uuid = UUID().uuidString
-        saveToKeychain(account: Self.account, service: Self.service, value: uuid)
-        return uuid
-    }
-
-    private func loadFromKeychain(account: String, service: String) -> String? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: account,
-            kSecAttrService as String: service,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
-        ]
-
-        return loadString(query: query)
-    }
-
-    private func loadLegacyKeychainValue(account: String) -> String? {
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: account,
-            kSecReturnData as String: true,
-            kSecMatchLimit as String: kSecMatchLimitOne
-        ]
-
-        return loadString(query: query)
-    }
-
-    private func loadString(query: [String: Any]) -> String? {
-        var resultData: AnyObject?
-        let status = SecItemCopyMatching(query as CFDictionary, &resultData)
-
-        guard status == errSecSuccess, let data = resultData as? Data else {
+        let generatedId = idGenerator()
+        guard !generatedId.isEmpty else {
             return nil
         }
 
-        return String(data: data, encoding: .utf8)
-    }
-
-    @discardableResult
-    private func saveToKeychain(account: String, service: String, value: String) -> Bool {
-        guard let data = value.data(using: .utf8) else {
-            return false
-        }
-
-        let query: [String: Any] = [
-            kSecClass as String: kSecClassGenericPassword,
-            kSecAttrAccount as String: account,
-            kSecAttrService as String: service
-        ]
-
-        let attributes: [String: Any] = [
-            kSecValueData as String: data,
-            kSecAttrAccessible as String: kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-        ]
-
-        let updateStatus = SecItemUpdate(query as CFDictionary, attributes as CFDictionary)
-        if updateStatus == errSecSuccess {
-            return true
-        }
-
-        var addQuery = query
-        addQuery[kSecValueData as String] = data
-        addQuery[kSecAttrAccessible as String] = kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly
-
-        return SecItemAdd(addQuery as CFDictionary, nil) == errSecSuccess
+        return keychainStore.save(
+            account: Self.account,
+            service: Self.service,
+            value: generatedId
+        ) ? generatedId : nil
     }
 }

@@ -20,9 +20,9 @@ class PersistentDeviceIdPlugin() : FlutterPlugin, MethodCallHandler {
     private val prefKey = "device_id"
     private val encryptedPrefsName = "keystore_prefs"
     private val fallbackPrefsName = "persistent_device_id_fallback_prefs"
-    private var deviceIdProvider: (() -> String)? = null
+    private var deviceIdProvider: (() -> String?)? = null
 
-    internal constructor(deviceIdProvider: () -> String) : this() {
+    internal constructor(deviceIdProvider: () -> String?) : this() {
         this.deviceIdProvider = deviceIdProvider
     }
 
@@ -40,7 +40,7 @@ class PersistentDeviceIdPlugin() : FlutterPlugin, MethodCallHandler {
         }
     }
 
-    private fun getDeviceId(): String {
+    private fun getDeviceId(): String? {
         val drmId = getMediaDrmId()
         return drmId ?: getOrCreateStoredId()
     }
@@ -51,7 +51,7 @@ class PersistentDeviceIdPlugin() : FlutterPlugin, MethodCallHandler {
             val widevineUUID = UUID(-0x121074568629b532L, -0x5c37d8232ae2de13L)
             mediaDrm = MediaDrm(widevineUUID)
             val deviceId = mediaDrm.getPropertyByteArray(MediaDrm.PROPERTY_DEVICE_UNIQUE_ID)
-            Base64.encodeToString(deviceId, Base64.NO_WRAP)
+            Base64.encodeToString(deviceId, Base64.NO_WRAP).takeIf { it.isNotEmpty() }
         } catch (e: Exception) {
             null
         } finally {
@@ -63,34 +63,70 @@ class PersistentDeviceIdPlugin() : FlutterPlugin, MethodCallHandler {
         }
     }
 
-    private fun getOrCreateStoredId(): String {
-        return try {
+    private fun getOrCreateStoredId(): String? {
+        val fallbackPreferences = try {
+            context.getSharedPreferences(fallbackPrefsName, Context.MODE_PRIVATE)
+        } catch (e: Exception) {
+            null
+        }
+
+        val encryptedPreferences = try {
             val masterKey = MasterKey.Builder(context)
                 .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
                 .build()
 
-            val sharedPreferences = EncryptedSharedPreferences.create(
+            EncryptedSharedPreferences.create(
                 context,
                 encryptedPrefsName,
                 masterKey,
                 EncryptedSharedPreferences.PrefKeyEncryptionScheme.AES256_SIV,
                 EncryptedSharedPreferences.PrefValueEncryptionScheme.AES256_GCM
             )
-
-            getOrCreateIdInPreferences(sharedPreferences)
         } catch (e: Exception) {
-            val fallbackPreferences = context.getSharedPreferences(fallbackPrefsName, Context.MODE_PRIVATE)
-            getOrCreateIdInPreferences(fallbackPreferences)
+            null
+        }
+
+        return resolveStoredId(encryptedPreferences, fallbackPreferences)
+    }
+
+    internal fun resolveStoredId(
+        encryptedPreferences: SharedPreferences?,
+        fallbackPreferences: SharedPreferences?,
+        idGenerator: () -> String = { UUID.randomUUID().toString() }
+    ): String? {
+        readStoredId(encryptedPreferences)?.let { return it }
+
+        readStoredId(fallbackPreferences)?.let { fallbackId ->
+            persistId(encryptedPreferences, fallbackId)
+            return fallbackId
+        }
+
+        val generatedId = idGenerator()
+        if (generatedId.isEmpty()) return null
+
+        if (persistId(encryptedPreferences, generatedId)) return generatedId
+        if (persistId(fallbackPreferences, generatedId)) return generatedId
+
+        return null
+    }
+
+    private fun readStoredId(sharedPreferences: SharedPreferences?): String? {
+        return try {
+            sharedPreferences?.getString(prefKey, null)?.takeIf { it.isNotEmpty() }
+        } catch (e: Exception) {
+            null
         }
     }
 
-    private fun getOrCreateIdInPreferences(sharedPreferences: SharedPreferences): String {
-        val existingId = sharedPreferences.getString(prefKey, null)
-        if (existingId != null) return existingId
-
-        val uuid = UUID.randomUUID().toString()
-        sharedPreferences.edit().putString(prefKey, uuid).apply()
-        return uuid
+    private fun persistId(sharedPreferences: SharedPreferences?, id: String): Boolean {
+        return try {
+            sharedPreferences
+                ?.edit()
+                ?.putString(prefKey, id)
+                ?.commit() == true
+        } catch (e: Exception) {
+            false
+        }
     }
 
     override fun onDetachedFromEngine(binding: FlutterPlugin.FlutterPluginBinding) {

@@ -28,10 +28,7 @@ class PersistentDeviceIdExampleApp extends StatelessWidget {
 }
 
 class DeviceIdScreen extends StatefulWidget {
-  const DeviceIdScreen({
-    required this.loadDeviceId,
-    super.key,
-  });
+  const DeviceIdScreen({required this.loadDeviceId, super.key});
 
   final Future<String?> Function() loadDeviceId;
 
@@ -80,9 +77,9 @@ class _DeviceIdScreenState extends State<DeviceIdScreen> {
     await Clipboard.setData(ClipboardData(text: deviceId));
     if (!mounted) return;
 
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Device ID copied')),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('Device ID copied')));
   }
 
   @override
@@ -203,10 +200,7 @@ class _DeviceIdValue extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Device ID',
-          style: Theme.of(context).textTheme.labelLarge,
-        ),
+        Text('Device ID', style: Theme.of(context).textTheme.labelLarge),
         const SizedBox(height: 8),
         SelectableText(
           deviceId,

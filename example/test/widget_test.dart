@@ -41,9 +41,7 @@ void main() {
 
   testWidgets('shows a null device ID state', (tester) async {
     await tester.pumpWidget(
-      PersistentDeviceIdExampleApp(
-        loadDeviceId: () async => null,
-      ),
+      PersistentDeviceIdExampleApp(loadDeviceId: () async => null),
     );
 
     await tester.pumpAndSettle();

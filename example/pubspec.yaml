@@ -9,12 +9,14 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  # Keep the native test plugin on the release classpath. Flutter 3.44's
+  # generated registrant references it in release builds.
+  integration_test:
+    sdk: flutter
   persistent_device_id:
     path: ../
 
 dev_dependencies:
-  integration_test:
-    sdk: flutter
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0

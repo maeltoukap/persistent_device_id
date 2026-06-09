@@ -5,8 +5,9 @@ import 'package:persistent_device_id/persistent_device_id.dart';
 void main() {
   IntegrationTestWidgetsFlutterBinding.ensureInitialized();
 
-  testWidgets('getDeviceId returns a stable value across repeated calls',
-      (_) async {
+  testWidgets('getDeviceId returns a stable value across repeated calls', (
+    _,
+  ) async {
     final first = await PersistentDeviceId.getDeviceId();
     final second = await PersistentDeviceId.getDeviceId();
 
