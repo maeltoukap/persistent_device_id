@@ -97,7 +97,9 @@ class PersistentDeviceIdPlugin() : FlutterPlugin, MethodCallHandler {
         readStoredId(encryptedPreferences)?.let { return it }
 
         readStoredId(fallbackPreferences)?.let { fallbackId ->
-            persistId(encryptedPreferences, fallbackId)
+            if (persistId(encryptedPreferences, fallbackId)) {
+                deleteStoredId(fallbackPreferences)
+            }
             return fallbackId
         }
 
@@ -123,6 +125,17 @@ class PersistentDeviceIdPlugin() : FlutterPlugin, MethodCallHandler {
             sharedPreferences
                 ?.edit()
                 ?.putString(prefKey, id)
+                ?.commit() == true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    private fun deleteStoredId(sharedPreferences: SharedPreferences?): Boolean {
+        return try {
+            sharedPreferences
+                ?.edit()
+                ?.remove(prefKey)
                 ?.commit() == true
         } catch (e: Exception) {
             false

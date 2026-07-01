@@ -11,6 +11,7 @@ enum KeychainReadResult {
 protocol DeviceIdKeychainStore {
     func read(account: String, service: String?) -> KeychainReadResult
     func save(account: String, service: String, value: String) -> Bool
+    func delete(account: String, service: String?) -> Bool
 }
 
 final class SystemDeviceIdKeychainStore: DeviceIdKeychainStore {
@@ -70,6 +71,19 @@ final class SystemDeviceIdKeychainStore: DeviceIdKeychainStore {
         addQuery.merge(attributes) { _, new in new }
         return SecItemAdd(addQuery as CFDictionary, nil) == errSecSuccess
     }
+
+    func delete(account: String, service: String?) -> Bool {
+        var query: [String: Any] = [
+            kSecClass as String: kSecClassGenericPassword,
+            kSecAttrAccount as String: account
+        ]
+        if let service {
+            query[kSecAttrService as String] = service
+        }
+
+        let status = SecItemDelete(query as CFDictionary)
+        return status == errSecSuccess || status == errSecItemNotFound
+    }
 }
 
 public class PersistentDeviceIdPlugin: NSObject, FlutterPlugin {
@@ -123,11 +137,13 @@ public class PersistentDeviceIdPlugin: NSObject, FlutterPlugin {
 
         switch keychainStore.read(account: Self.account, service: nil) {
         case let .value(legacy):
-            _ = keychainStore.save(
+            if keychainStore.save(
                 account: Self.account,
                 service: Self.service,
                 value: legacy
-            )
+            ) {
+                _ = keychainStore.delete(account: Self.account, service: nil)
+            }
             return legacy
         case .unavailable:
             return nil

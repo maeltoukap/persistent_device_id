@@ -25,6 +25,7 @@ final class RunnerTests: XCTestCase {
 
         XCTAssertEqual(plugin.getOrCreateDeviceId(), "legacy-id")
         XCTAssertEqual(store.savedValues, ["legacy-id"])
+        XCTAssertEqual(store.deletedLegacyCount, 1)
     }
 
     func testPreservesLegacyIdWhenMigrationWriteFails() {
@@ -36,6 +37,7 @@ final class RunnerTests: XCTestCase {
         let plugin = PersistentDeviceIdPlugin(keychainStore: store)
 
         XCTAssertEqual(plugin.getOrCreateDeviceId(), "legacy-id")
+        XCTAssertEqual(store.deletedLegacyCount, 0)
     }
 
     func testGeneratesIdAfterMissingOrCorruptedValues() {
@@ -85,6 +87,7 @@ private final class MockKeychainStore: DeviceIdKeychainStore {
     private let saveResult: Bool
 
     private(set) var savedValues: [String] = []
+    private(set) var deletedLegacyCount = 0
 
     init(
         scopedResult: KeychainReadResult,
@@ -103,5 +106,12 @@ private final class MockKeychainStore: DeviceIdKeychainStore {
     func save(account: String, service: String, value: String) -> Bool {
         savedValues.append(value)
         return saveResult
+    }
+
+    func delete(account: String, service: String?) -> Bool {
+        if service == nil {
+            deletedLegacyCount += 1
+        }
+        return true
     }
 }

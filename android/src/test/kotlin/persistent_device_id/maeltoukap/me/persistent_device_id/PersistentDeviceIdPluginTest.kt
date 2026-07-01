@@ -62,6 +62,8 @@ internal class PersistentDeviceIdPluginTest {
         assertEquals("fallback-id", result)
         Mockito.verify(encrypted.editor).putString("device_id", "fallback-id")
         Mockito.verify(encrypted.editor).commit()
+        Mockito.verify(fallback.editor).remove("device_id")
+        Mockito.verify(fallback.editor).commit()
     }
 
     @Test
@@ -91,7 +93,23 @@ internal class PersistentDeviceIdPluginTest {
         assertEquals("fallback-id", result)
         Mockito.verify(encrypted.editor).putString("device_id", "fallback-id")
         Mockito.verify(encrypted.editor).commit()
-        Mockito.verifyNoInteractions(fallback.editor)
+        Mockito.verify(fallback.editor).remove("device_id")
+        Mockito.verify(fallback.editor).commit()
+    }
+
+    @Test
+    fun resolveStoredId_keepsPlainFallbackWhenEncryptedMigrationFails() {
+        val encrypted = mockPreferences(existingId = null, commitResult = false)
+        val fallback = mockPreferences(existingId = "fallback-id", commitResult = true)
+        val plugin = PersistentDeviceIdPlugin()
+
+        val result = plugin.resolveStoredId(encrypted.preferences, fallback.preferences)
+
+        assertEquals("fallback-id", result)
+        Mockito.verify(encrypted.editor).putString("device_id", "fallback-id")
+        Mockito.verify(encrypted.editor).commit()
+        Mockito.verify(fallback.editor, Mockito.never()).remove("device_id")
+        Mockito.verify(fallback.editor, Mockito.never()).commit()
     }
 
     @Test
@@ -124,6 +142,7 @@ internal class PersistentDeviceIdPluginTest {
         Mockito.`when`(preferences.edit()).thenReturn(editor)
         Mockito.`when`(editor.putString("device_id", "generated-id")).thenReturn(editor)
         Mockito.`when`(editor.putString("device_id", "fallback-id")).thenReturn(editor)
+        Mockito.`when`(editor.remove("device_id")).thenReturn(editor)
         Mockito.`when`(editor.commit()).thenReturn(commitResult)
 
         return MockPreferences(preferences, editor)

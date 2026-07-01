@@ -10,11 +10,13 @@
 - Updated AndroidX Security Crypto to stable `1.1.0`.
 - Lowered Android minSdk to 21.
 - Changed Android fallback writes to synchronous, checked persistence and added
-  migration from app-private fallback storage into encrypted preferences.
+  migration from app-private fallback storage into encrypted preferences,
+  removing the plaintext fallback entry after a successful encrypted write.
 - Moved iOS source into a Swift Package Manager-friendly layout while keeping
   CocoaPods support.
 - Updated iOS Keychain storage to use a service-scoped item and migrate the
-  legacy account-only item from earlier releases.
+  legacy account-only item from earlier releases, deleting the legacy item after
+  a successful scoped write.
 - Made iOS Keychain reads status-aware so temporary storage failures return
   `null` instead of creating a second identifier.
 - Rewrote README documentation with clearer guarantees, platform differences,
@@ -38,9 +40,11 @@
 - The iOS deployment target increases from 12.0 to 13.0.
 - Existing iOS account-only Keychain IDs are migrated automatically on the
   first call after upgrading. A readable legacy ID remains valid even if the
-  migration write cannot complete.
+  migration write cannot complete. The legacy item is deleted only after a
+  successful scoped write.
 - Android app-private fallback IDs are migrated into encrypted preferences when
-  encrypted storage becomes available.
+  encrypted storage becomes available. The plaintext fallback entry is removed
+  only after a successful encrypted write.
 - A `null` result means the native implementation could not obtain or durably
   persist an ID. Method channel registration errors continue to throw.
 
