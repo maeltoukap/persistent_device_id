@@ -15,8 +15,8 @@
 - Moved iOS source into a Swift Package Manager-friendly layout while keeping
   CocoaPods support.
 - Updated iOS Keychain storage to use a service-scoped item and migrate the
-  legacy account-only item from earlier releases, deleting the legacy item after
-  a successful scoped write.
+  legacy account-only item from earlier releases while preferring the new
+  service-scoped entry on subsequent reads.
 - Made iOS Keychain reads status-aware so temporary storage failures return
   `null` instead of creating a second identifier.
 - Rewrote README documentation with clearer guarantees, platform differences,
@@ -40,8 +40,8 @@
 - The iOS deployment target increases from 12.0 to 13.0.
 - Existing iOS account-only Keychain IDs are migrated automatically on the
   first call after upgrading. A readable legacy ID remains valid even if the
-  migration write cannot complete. The legacy item is deleted only after a
-  successful scoped write.
+  migration write cannot complete. The migrated scoped entry is preferred on
+  later reads, while the legacy item remains until it can be removed safely.
 - Android app-private fallback IDs are migrated into encrypted preferences when
   encrypted storage becomes available. The plaintext fallback entry is removed
   only after a successful encrypted write.

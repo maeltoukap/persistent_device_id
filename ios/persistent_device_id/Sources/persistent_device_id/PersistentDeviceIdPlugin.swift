@@ -137,13 +137,14 @@ public class PersistentDeviceIdPlugin: NSObject, FlutterPlugin {
 
         switch keychainStore.read(account: Self.account, service: nil) {
         case let .value(legacy):
-            if keychainStore.save(
+            // Legacy entries were stored without a service, so deleting by account
+            // would also match the newly scoped item. Preserve the migrated value
+            // until legacy cleanup can target the old row safely.
+            _ = keychainStore.save(
                 account: Self.account,
                 service: Self.service,
                 value: legacy
-            ) {
-                _ = keychainStore.delete(account: Self.account, service: nil)
-            }
+            )
             return legacy
         case .unavailable:
             return nil

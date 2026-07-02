@@ -101,8 +101,9 @@ password item. Version 2.0.0 also migrates the legacy account-only Keychain item
 used by earlier releases so existing apps can keep their previous identifier.
 This migration is attempted automatically on the first `getDeviceId()` call
 after upgrading. If the migration write fails, the readable legacy ID is still
-returned. After a successful scoped Keychain write, the old legacy Keychain item
-is deleted.
+returned. After a successful scoped Keychain write, later reads use the new
+service-scoped entry first. The legacy account-only item is intentionally left
+in place until it can be removed with an exact Keychain query.
 
 The Keychain item uses `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`, so it
 is intended to stay on the same physical device and not migrate through backups
@@ -120,8 +121,8 @@ minimum tooling and platform requirements:
 - Dart `^3.11.0` and Flutter `>=3.41.0` are required.
 - The iOS deployment target increases from 12.0 to 13.0.
 - Existing iOS account-only Keychain IDs are migrated to the service-scoped
-  entry on first access, then the legacy item is deleted after a successful
-  scoped write.
+  entry on first access. The scoped entry is preferred on later reads, while
+  the legacy item remains until it can be removed safely.
 - Android app-private fallback IDs are migrated to encrypted preferences when
   encrypted storage becomes available, then the plaintext fallback entry is
   removed after a successful encrypted write.
