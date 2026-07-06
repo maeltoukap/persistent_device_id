@@ -72,6 +72,11 @@ final class SystemDeviceIdKeychainStore: DeviceIdKeychainStore {
         return SecItemAdd(addQuery as CFDictionary, nil) == errSecSuccess
     }
 
+    /// Deletes a Keychain item.
+    /// - Parameters:
+    ///   - account: The Keychain account identifier.
+    ///   - service: The service scope. If `nil`, the query matches all items for this account broadly.
+    ///     To target only legacy items created without a service, pass an empty string `""`.
     func delete(account: String, service: String?) -> Bool {
         var query: [String: Any] = [
             kSecClass as String: kSecClassGenericPassword,
@@ -125,9 +130,26 @@ public class PersistentDeviceIdPlugin: NSObject, FlutterPlugin {
         }
     }
 
+    /// Retrieves the persistent device ID from the Keychain, performing migration and cleanup.
+    ///
+    /// ## Migration & Cleanup Strategy:
+    /// - **Pre-2.0.0 (Legacy)**: Stored without a service scope (`service: nil`). This defaulted to a
+    ///   backup-eligible accessibility, causing the device ID to leak across physical devices via backup restores.
+    /// - **2.0.0+ (Scoped)**: Stored under a scoped service (`persistent_device_id`) with `ThisDeviceOnly` accessibility.
+    ///
+    /// To resolve the leak, we must delete the legacy item. However, deleting with `service: nil` matches
+    /// and deletes both legacy and scoped items. Setting `service: ""` (empty string) in the query specifically
+    /// targets the legacy item (since it has no service key, defaulting to `""` in the database) without affecting
+    /// the scoped item.
+    ///
+    /// We delete the legacy item in two places:
+    /// 1. Immediately after successfully migrating the legacy ID to the scoped item.
+    /// 2. On launch, if the scoped item already exists (cleans up legacy items for users upgrading from intermediate 2.x versions).
     func getOrCreateDeviceId() -> String? {
         switch keychainStore.read(account: Self.account, service: Self.service) {
         case let .value(existing):
+            // Clean up the legacy item if it exists.
+            _ = keychainStore.delete(account: Self.account, service: "")
             return existing
         case .unavailable:
             return nil
@@ -137,14 +159,16 @@ public class PersistentDeviceIdPlugin: NSObject, FlutterPlugin {
 
         switch keychainStore.read(account: Self.account, service: nil) {
         case let .value(legacy):
-            // Legacy entries were stored without a service, so deleting by account
-            // would also match the newly scoped item. Preserve the migrated value
-            // until legacy cleanup can target the old row safely.
-            _ = keychainStore.save(
+            // Legacy entries were stored without a service. Save to scoped first.
+            let saved = keychainStore.save(
                 account: Self.account,
                 service: Self.service,
                 value: legacy
             )
+            if saved {
+                // Once safely migrated to the scoped item, delete the legacy item.
+                _ = keychainStore.delete(account: Self.account, service: "")
+            }
             return legacy
         case .unavailable:
             return nil

@@ -21,8 +21,8 @@ final class RunnerTests: XCTestCase {
         XCTAssertEqual(secondLaunchPlugin.getOrCreateDeviceId(), "legacy-id")
         XCTAssertEqual(store.savedValues, ["legacy-id"])
         XCTAssertEqual(store.scopedValue, "legacy-id")
-        XCTAssertEqual(store.legacyValue, "legacy-id")
-        XCTAssertEqual(store.deletedLegacyCount, 0)
+        XCTAssertNil(store.legacyValue)
+        XCTAssertEqual(store.deletedLegacyCount, 2)
     }
 
     func testPreservesLegacyIdWhenMigrationWriteFails() {
@@ -107,12 +107,12 @@ final class RunnerTests: XCTestCase {
     func testSystemKeychainMigrationPreservesIdAcrossTwoLaunches() {
         let store = SystemDeviceIdKeychainStore()
 
-        deleteKeychainItems(account: pluginAccount, service: nil)
+        deleteKeychainItems(account: pluginAccount, service: "")
         deleteKeychainItems(account: pluginAccount, service: pluginService)
         addLegacyKeychainItem(account: pluginAccount, value: "legacy-id")
 
         defer {
-            deleteKeychainItems(account: pluginAccount, service: nil)
+            deleteKeychainItems(account: pluginAccount, service: "")
             deleteKeychainItems(account: pluginAccount, service: pluginService)
         }
 
@@ -133,10 +133,40 @@ final class RunnerTests: XCTestCase {
         }
         XCTAssertEqual(scoped, "legacy-id")
 
-        guard case let .value(legacy) = store.read(account: pluginAccount, service: nil) else {
-            return XCTFail("Expected legacy keychain item to remain readable after safe migration")
+        guard case .missing = store.read(account: pluginAccount, service: "") else {
+            return XCTFail("Expected legacy keychain item to be deleted after migration")
         }
-        XCTAssertEqual(legacy, "legacy-id")
+    }
+
+    func testTargetedLegacyDeleteQueryDoesNotRemoveScopedItem() {
+        let account = "persistent_device_id.tests.\(UUID().uuidString)"
+        let scopedService = "persistent_device_id.tests.scoped"
+        let store = SystemDeviceIdKeychainStore()
+
+        addLegacyKeychainItem(account: account, value: "legacy-id")
+        XCTAssertTrue(store.save(account: account, service: scopedService, value: "scoped-id"))
+
+        defer {
+            deleteKeychainItems(account: account, service: "")
+            deleteKeychainItems(account: account, service: scopedService)
+        }
+
+        // Targeted delete of legacy item using service: ""
+        XCTAssertTrue(store.delete(account: account, service: ""))
+
+        // Legacy item should be gone
+        if case .missing = store.read(account: account, service: "") {
+            // Expected
+        } else {
+            XCTFail("Expected legacy item to be deleted")
+        }
+
+        // Scoped item should still exist!
+        if case let .value(scoped) = store.read(account: account, service: scopedService) {
+            XCTAssertEqual(scoped, "scoped-id")
+        } else {
+            XCTFail("Expected scoped item to still exist")
+        }
     }
 }
 
@@ -192,15 +222,19 @@ private final class MockKeychainStore: DeviceIdKeychainStore {
     }
 
     func delete(account: String, service: String?) -> Bool {
-        if service == nil {
+        let isLegacy = (service == nil || service == "")
+        if isLegacy {
             deletedLegacyCount += 1
-            // Matches the real regression: a query without service filters wipes
-            // both the legacy item and any newly scoped item for the same account.
         }
         if service == nil {
+            // Matches the real regression: a query without service filters wipes
+            // both the legacy item and any newly scoped item for the same account.
             storedValues.removeAll()
         } else {
             storedValues.removeValue(forKey: service)
+            if service == "" {
+                storedValues.removeValue(forKey: nil)
+            }
         }
         return true
     }
