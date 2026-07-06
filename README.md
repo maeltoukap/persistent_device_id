@@ -1,30 +1,52 @@
 <img src="https://raw.githubusercontent.com/maeltoukap/persistent_device_id/refs/heads/main/assets/persistent_device_id_logo.png" alt="Persistent Device ID Logo" width="200"/>
 
-# 📱 persistent\_device\_id
+# persistent_device_id
 
-A Flutter plugin that provides a **unique, persistent, and secure** device identifier—**even after reinstalling the app or resetting the device**.
-Supports **Android** and **iOS** using system-level cryptography and secure storage.
+A Flutter plugin that returns a persistent, app-scoped device identifier for
+Android and iOS.
 
----
+The public API stays intentionally small:
 
-## ✨ Features
+```dart
+final deviceId = await PersistentDeviceId.getDeviceId();
+```
 
-* 🔒 Generates a **unique and persistent ID per device**
-* ♻️ Persists across app reinstalls, cache wipes, and even factory resets (when possible)
-* 🛡️ Uses **MediaDrm**, **Android Keystore**, and **EncryptedSharedPreferences** on Android
-* 🍏 Uses **Keychain** on iOS
-* 🚫 Requires **no runtime permissions**
-* 📦 Simple, asynchronous API
+## What This ID Is
 
----
+`persistent_device_id` returns an identifier that is stable across repeated app
+launches on the same platform installation. It is designed for app diagnostics,
+fraud signals, rate limiting, abuse prevention, and other cases where a stable
+client-side installation/device signal is useful.
 
-## 📦 Installation
+## What This ID Is Not
 
-Add this to your `pubspec.yaml`:
+This value is not a proof of identity, authentication credential, advertising
+identifier, or guaranteed hardware serial number. Do not use it as the only
+security control for accounts, payments, licensing, or access decisions.
+
+The identifier can change when platform storage is cleared, a device is reset,
+operating system behavior changes, or an app is restored/migrated in a way that
+does not preserve the underlying storage.
+
+## Supported Platforms
+
+| Platform | Support | Storage strategy |
+| -------- | ------- | ---------------- |
+| Android  | Yes     | MediaDrm when available, otherwise generated UUID in encrypted app storage |
+| iOS      | Yes     | Generated UUID stored in Keychain |
+
+macOS, Windows, Linux, and Web are intentionally not declared in this release.
+Browser storage cannot provide the same security or persistence guarantees, and
+desktop support should be added only with platform-specific persistence and
+tests.
+
+## Installation
+
+Add the package to your `pubspec.yaml`:
 
 ```yaml
 dependencies:
-  persistent_device_id: <latest_version>
+  persistent_device_id: ^2.0.0
 ```
 
 Then run:
@@ -33,87 +55,113 @@ Then run:
 flutter pub get
 ```
 
----
-
-## 🛠️ Usage
-
-### Import the package
+## Usage
 
 ```dart
 import 'package:persistent_device_id/persistent_device_id.dart';
+
+Future<void> loadDeviceId() async {
+  final deviceId = await PersistentDeviceId.getDeviceId();
+  print('Device ID: $deviceId');
+}
 ```
 
-### Get the device ID
+`getDeviceId()` returns `Future<String?>` to preserve the original public API.
+Android and iOS return a generated ID only after it has been durably stored.
+A `null` result means the native implementation could not obtain or persist a
+stable ID. Method channel errors such as `MissingPluginException` are not
+converted to `null` because they indicate an app integration or registration
+problem.
 
-```dart
-final deviceId = await PersistentDeviceId.getDeviceId();
-print("Device ID: $deviceId");
-```
-
----
-
-## ⚙️ Supported Platforms
-
-| Platform | Support |
-| -------- | ------- |
-| Android  | ✅ Yes   |
-| iOS      | ✅ Yes   |
-
----
-
-## 🧠 How It Works
-
-This plugin uses **different secure layers per platform** to persist a device-unique identifier:
+## Platform Details
 
 ### Android
 
-1. Attempts to derive a hardware-based ID from [`MediaDrm`](https://developer.android.com/reference/android/media/MediaDrm) (API ≥ 18).
-2. If `MediaDrm` is not supported or fails (e.g. on rooted/custom ROM devices), falls back to:
+Android first attempts to read a Widevine `MediaDrm` device identifier. When
+that is unavailable or fails, the plugin generates a UUID and stores it in
+`EncryptedSharedPreferences`, protected by AndroidX Security and Android
+Keystore where available.
 
-   * A generated UUID
-   * Stored in [`EncryptedSharedPreferences`](https://developer.android.com/reference/androidx/security/crypto/EncryptedSharedPreferences)
-   * Protected by the [`Android Keystore`](https://developer.android.com/training/articles/keystore)
+If encrypted storage cannot be initialized or written, the plugin uses
+app-private `SharedPreferences`. On a later call, an existing app-private ID is
+migrated into encrypted storage when it becomes available, without changing the
+returned ID. After a successful encrypted write, the old app-private fallback
+entry is removed. New IDs are returned only after a synchronous storage write
+succeeds. If neither store can persist the ID, the plugin returns `null`.
+
+Minimum Android SDK: 21. AndroidX Security Crypto `1.1.0` supports API 21 and
+later. The
+[AndroidX Security release notes](https://developer.android.com/jetpack/androidx/releases/security)
+note that AndroidKeyStore is not used by the library on API 21 and 22.
 
 ### iOS
 
-* Uses the [`Keychain`](https://developer.apple.com/documentation/security/keychain_services) to securely store and persist a generated UUID.
+iOS generates a UUID and stores it in Keychain using a service-scoped generic
+password item. Version 2.0.0 also migrates the legacy account-only Keychain item
+used by earlier releases so existing apps can keep their previous identifier.
+This migration is attempted automatically on the first `getDeviceId()` call
+after upgrading. If the migration write fails, the readable legacy ID is still
+returned. After a successful scoped Keychain write, later reads use the new
+service-scoped entry first. The legacy account-only item is intentionally left
+in place until it can be removed with an exact Keychain query.
 
----
+The Keychain item uses `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`, so it
+is intended to stay on the same physical device and not migrate through backups
+to another device. Missing or corrupted entries are regenerated, but the new ID
+is returned only after the Keychain write succeeds. Temporary Keychain
+unavailability returns `null` rather than creating a second identity.
 
-## ✅ Android Requirements
+Minimum iOS version: 13.0.
 
-* **minSdkVersion**: 21
-* **compileSdkVersion**: 34
-* No special permissions needed
+## Migration From 1.x
 
----
+Version 2.0.0 preserves `PersistentDeviceId.getDeviceId()`, but raises the
+minimum tooling and platform requirements:
 
-## 🚧 Limitations
+- Dart `^3.11.0` and Flutter `>=3.41.0` are required.
+- The iOS deployment target increases from 12.0 to 13.0.
+- Existing iOS account-only Keychain IDs are migrated to the service-scoped
+  entry on first access. The scoped entry is preferred on later reads, while
+  the legacy item remains until it can be removed safely.
+- Android app-private fallback IDs are migrated to encrypted preferences when
+  encrypted storage becomes available, then the plaintext fallback entry is
+  removed after a successful encrypted write.
+- Consumers should continue handling `null`, which now specifically means no
+  durable native ID could be obtained.
 
-* `MediaDrm` only available on Android **API ≥ 18**
-* On some custom or rooted ROMs, `MediaDrm` may be unreliable
-* Factory reset will remove the ID unless hardware-backed
-* On iOS, Keychain-based ID may reset **if iCloud Keychain is disabled** or device is **restored without backup**
+## Persistence Limits
 
----
+The ID is persistent, but not immutable:
 
-## 🔍 Example
+- App data clearing can reset Android fallback storage.
+- iOS Keychain behavior after uninstall can vary by OS version, app group, and
+  installation history.
+- Factory reset can reset identifiers.
+- Device restore, backup migration, or OS policy changes can reset identifiers.
+- Rooted, jailbroken, emulated, or heavily customized devices can behave
+  differently.
 
-Clone the repository and run the example app:
+If your app needs a durable user identity, use your own authenticated backend
+identity and treat this package as an additional device/install signal.
+
+## Apple Packaging
+
+The iOS implementation supports modern Flutter Apple packaging with Swift
+Package Manager-friendly source layout while keeping CocoaPods support for
+projects that have not migrated yet.
+
+## Example
+
+Run the bundled example app:
 
 ```bash
 cd example
 flutter run
 ```
 
----
+The example shows loading, refreshing, copying, and displaying error/null states
+for the device ID.
 
-## 📄 License
+## License
 
-MIT License. © 2025 Mael Toukap.
-
----
-
-## 🙋‍♂️ Contributing
-
-Contributions are welcome! Please open an issue or submit a pull request on [GitHub](https://github.com/maeltoukap/persistent_device_id)
+MIT License. See [LICENSE](LICENSE).

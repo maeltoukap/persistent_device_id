@@ -1,16 +1,16 @@
-# persistent_device_id_example
+# persistent_device_id example
 
-Demonstrates how to use the persistent_device_id plugin.
+Demonstrates `PersistentDeviceId.getDeviceId()` on Android and iOS.
 
-## Getting Started
+The example app shows:
 
-This project is a starting point for a Flutter application.
+- loading the device ID on startup
+- refreshing the value
+- copying the value to the clipboard
+- displaying null and error states
 
-A few resources to get you started if this is your first Flutter project:
+Run it from this directory:
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+```bash
+flutter run
+```

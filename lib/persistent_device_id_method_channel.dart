@@ -10,8 +10,7 @@ class MethodChannelPersistentDeviceId extends PersistentDeviceIdPlatform {
   final methodChannel = const MethodChannel('persistent_device_id');
 
   @override
-  Future<String?> getPlatformVersion() async {
-    final version = await methodChannel.invokeMethod<String>('getPlatformVersion');
-    return version;
+  Future<String?> getDeviceId() async {
+    return methodChannel.invokeMethod<String>('getDeviceId');
   }
 }
