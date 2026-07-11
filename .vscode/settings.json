@@ -1,0 +1,18 @@
+{
+  "workbench.colorCustomizations": {
+    "activityBar.background": "#103140",
+    "titleBar.activeBackground": "#164559",
+    "titleBar.activeForeground": "#F6FBFD",
+    "editor.lineHighlightBackground": "#1073cf2d",
+    "editor.lineHighlightBorder": "#9fced11f",
+    "titleBar.inactiveBackground": "#103140",
+    "titleBar.inactiveForeground": "#F6FBFD",
+    "statusBar.background": "#103140",
+    "statusBar.foreground": "#F6FBFD",
+    "statusBar.debuggingBackground": "#103140",
+    "statusBar.debuggingForeground": "#F6FBFD",
+    "statusBar.noFolderBackground": "#103140",
+    "statusBar.noFolderForeground": "#F6FBFD"
+  },
+  "dart.flutterSdkPath": ".fvm/versions/3.44.6"
+}
