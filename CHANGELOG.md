@@ -1,8 +1,9 @@
 # Changelog
 
-## 2.0.0 - 2026-06-03
+## 2.0.0 - 2026-07-11
 
 ### Changed
+
 - Raised the package SDK floor to Dart `^3.11.0` and Flutter `>=3.41.0`.
 - Kept the public API stable as `PersistentDeviceId.getDeviceId()`.
 - Routed the Dart API through the platform interface and removed scaffolded
@@ -26,6 +27,7 @@
   builds so the generated Android plugin registrant compiles successfully.
 
 ### Added
+
 - Swift Package Manager manifest for iOS.
 - Privacy manifest bundling through both Swift Package Manager and CocoaPods.
 - Dart tests for API stability, repeated calls, method-channel forwarding, and
@@ -35,6 +37,7 @@
   values, legacy Keychain migration, and unavailable storage.
 
 ### Migration from 1.x
+
 - The Dart API remains `PersistentDeviceId.getDeviceId()`.
 - Dart `^3.11.0` and Flutter `>=3.41.0` are now required.
 - The iOS deployment target increases from 12.0 to 13.0.
@@ -51,6 +54,7 @@
 ## 1.1.0 - 2025-06-11
 
 ### Added
+
 - iOS support using Keychain for persistent device identification.
 - Automatic fallback to a generated UUID stored in the Keychain on iOS.
 - Improved platform abstraction layer.
@@ -59,6 +63,7 @@
 ## 1.0.0 - 2025-06-10
 
 ### Added
+
 - Initial release of `persistent_device_id`.
 - Android support using `MediaDrm.deviceUniqueId` where available.
 - Fallback UUID storage using Android Keystore and encrypted shared preferences.
